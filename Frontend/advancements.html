@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AgriGuide – Scheme News</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    ul#news-list {
+      list-style: none;
+      padding: 0;
+    }
+    li.news-item {
+      border-bottom: 1px solid #ddd;
+      padding: 1rem 0;
+      display: flex;
+      flex-direction: row;
+      gap: 1rem;
+    }
+    .news-content {
+      flex: 1;
+    }
+    .news-thumb {
+      width: 120px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+    .news-item h3 {
+      font-size: 1.1rem;
+      margin: 0 0 0.4rem;
+      color: #2e7d32;
+    }
+    .news-item p {
+      margin: 0.3rem 0;
+    }
+    button.listen-btn {
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      padding: 0.3rem 0.6rem;
+      margin-top: 0.3rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button.listen-btn:hover {
+      background-color: #1b5e20;
+    }
+    #backToTop {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background-color: #2e7d32;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      padding: 0.6rem 1rem;
+      font-size: 18px;
+      cursor: pointer;
+      display: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    #backToTop:hover {
+      background-color: #1b5e20;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a href="home.html">🏠 Home</a></li>
+      <li><a href="prediction.html">🔍 Prediction</a></li>
+      <li><a href="news.html">📰 News</a></li>
+      <li><a href="advancements.html">🌾 Advancements</a></li>
+    </ul>
+  </nav>
+  <div class="container">
+    <h1>🌾 Agricultural Advancements</h1>
+    <ul id="adv-list"><li>Loading advancements…</li></ul>
+  </div>
+
+  <button id="backToTop" title="Go to top">↑</button>
+
+  <script>
+    const apiKey = "c7db8ff35811ac9dbef1d3e72c31a8d5"; // 🔑 Replace with your GNews API key
+    let advData = [];
+    let currentIndex = 0;
+    const batchSize = 5;
+    const advList = document.getElementById("adv-list");
+
+    function fetchAdvancements() {
+      const url = `https://gnews.io/api/v4/search?q=agriculture+technology&lang=en&country=in&max=20&apikey=${apiKey}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.articles || data.articles.length === 0) {
+            advList.innerHTML = "<li>🚫 No advancements found.</li>";
+            return;
+          }
+
+          advData = data.articles;
+          currentIndex = 0;
+          advList.innerHTML = "";
+          renderAdvBatch();
+        })
+        .catch(() => {
+          advList.innerHTML = "<li>⚠️ Failed to load advancements.</li>";
+        });
+    }
+
+    function renderAdvBatch() {
+      const nextIndex = Math.min(currentIndex + batchSize, advData.length);
+
+      for (let i = currentIndex; i < nextIndex; i++) {
+        const item = advData[i];
+        const title = item.title || "Untitled";
+        const description = item.description || "";
+        const image = item.image || "";
+        const link = item.url || "#";
+
+        const li = document.createElement("li");
+        li.classList.add("adv-item");
+
+        li.innerHTML = `
+          ${image ? `<img src="${image}" class="adv-thumb" alt="Image">` : ""}
+          <div class="adv-content">
+            <h3><a href="${link}" target="_blank">${title}</a></h3>
+            <p>${description.slice(0, 200)}...</p>
+            <button class="listen-btn" onclick='speak(${JSON.stringify(title + ". " + description)})'>🔊 Listen</button>
+          </div>
+        `;
+
+        advList.appendChild(li);
+      }
+
+      currentIndex = nextIndex;
+    }
+
+    function speak(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      speechSynthesis.speak(utterance);
+    }
+
+    // Infinite Scroll
+    window.addEventListener("scroll", () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+        if (currentIndex < advData.length) {
+          renderAdvBatch();
+        }
+      }
+
+      document.getElementById("backToTop").style.display =
+        window.scrollY > 300 ? "block" : "none";
+    });
+
+    // Scroll to Top
+    document.getElementById("backToTop").addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    fetchAdvancements();
+  </script>
+</body>
+</html>

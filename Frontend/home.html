@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AgriGuide – Home</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav>
+    <ul>
+      <li><a href="home.html" data-i18n="nav_home">🏠 Home</a></li>
+      <li><a href="prediction.html" data-i18n="nav_prediction">🔍 Prediction</a></li>
+      <li><a href="news.html" data-i18n="nav_news">📰 News</a></li>
+      <li><a href="advancements.html" data-i18n="nav_advancements">🌾 Advancements</a></li>
+    </ul>
+  </nav>
+
+  <div style="padding: 1em;">
+    <label for="lang-select" data-i18n="lang_label">🌐 Language:</label>
+    <select id="lang-select">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी</option>
+      <option value="te">తెలుగు</option>
+    </select>
+  </div>
+
+  <div class="container">
+    <h1 data-i18n="welcome">🌱 Welcome to AgriGuide</h1>
+
+    <section>
+      <h2 data-i18n="Empowering Farmers with Smart Technology">🚜 Empowering Farmers with Smart Technology</h2>
+      <p data-i18n="intro_para" id="introPara">
+        AgriGuide is your digital farming assistant. It helps farmers choose the right crop based on soil data, recommends fertilizers, and keeps them informed with news, government schemes, and new innovations in agriculture.
+      </p>
+      <button onclick="speakTextWithFallback('intro')">🔊</button>
+    </section>
+
+    <section>
+      <h2 data-i18n="why_farming">🌾 Why Farming Matters</h2>
+      <p data-i18n="why_para" id="whyPara">
+        Farming is the backbone of society. It feeds the nation, fuels the economy, and sustains generations. By empowering farmers, we strengthen the roots of our future.
+      </p>
+      <button onclick="speakTextWithFallback('why')">🔊</button>
+    </section>
+
+    <section>
+      <ul>
+        <li data-i18n="slogan_1" id="s1">“No farmer, no food, no future.”</li>
+        <li data-i18n="slogan_2" id="s2">“Support farmers—support life.”</li>
+        <li data-i18n="slogan_3" id="s3">“From soil to soul, farming feeds us all.”</li>
+        <li data-i18n="slogan_4" id="s4">“Grow more, feed more, live better.”</li>
+        <li data-i18n="slogan_5" id="s5">“Agriculture is the most healthful, most useful and most noble employment of man.” – George Washington</li>
+      </ul>
+      <button onclick="speakTextWithFallback('slogans')">🔊 Read Slogans</button>
+    </section>
+
+    <section>
+      <h2 data-i18n="explore">🌐 Explore AgriGuide</h2>
+      <p data-i18n="explore_desc" id="exploreDesc">Use AgriGuide's features to make informed agricultural decisions:</p>
+      <ul>
+        <li data-i18n="explore_predict" id="ep1">🔍 Predict the best crop and fertilizer using soil data</li>
+        <li data-i18n="explore_news" id="ep2">📰 Stay updated with the latest farming news</li>
+        <li data-i18n="explore_schemes" id="ep3">🏛️ Discover relevant government schemes</li>
+        <li data-i18n="explore_advancements" id="ep4">🌾 Learn about new technologies in agriculture</li>
+      </ul>
+      <button onclick="speakTextWithFallback('explore')">🔊 Speak Explore</button>
+    </section>
+  </div>
+
+  <!-- Voice Playback Script with Fallback -->
+  <script>
+    function getLang() {
+      return localStorage.getItem("lang") || "en";
+    }
+
+    function speakTextWithFallback(key) {
+      const lang = getLang();
+      const audioPath = `audio/${lang}/${key}.mp3`;
+
+      fetch(audioPath, { method: "HEAD" })
+        .then(response => {
+          if (response.ok) {
+            const audio = new Audio(audioPath);
+            audio.play();
+          } else {
+            fallbackTTS(lang, key);
+          }
+        })
+        .catch(() => {
+          fallbackTTS(lang, key);
+        });
+    }
+
+    function fallbackTTS(lang, key) {
+      fetch(`lang/${lang}.json`)
+        .then(res => res.json())
+        .then(dict => {
+          const text = dict[key] || "";
+          const utterance = new SpeechSynthesisUtterance(text);
+          if (lang === "hi") utterance.lang = "hi-IN";
+          else if (lang === "te") utterance.lang = "te-IN";
+          else utterance.lang = "en-IN";
+          speechSynthesis.speak(utterance);
+        });
+    }
+  </script>
+
+  <!-- Translation Loader -->
+  <script src="lang.js"></script>
+  <script>
+    function loadTranslations(lang) {
+      fetch(`lang/${lang}.json`)
+        .then(res => res.json())
+        .then(dict => {
+          document.querySelectorAll("[data-i18n]").forEach(el => {
+            const key = el.getAttribute("data-i18n");
+            if (dict[key]) el.textContent = dict[key];
+          });
+        });
+    }
+
+    function setLang(lang) {
+      localStorage.setItem("lang", lang);
+      loadTranslations(lang);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const lang = getLang();
+      document.getElementById("lang-select").value = lang;
+      loadTranslations(lang);
+      document.getElementById("lang-select").addEventListener("change", (e) => {
+        setLang(e.target.value);
+      });
+    });
+  </script>
+
+  <!-- PWA Support -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('✅ Service Worker registered'))
+        .catch(console.error);
+    }
+  </script>
+</body>
+</html>
